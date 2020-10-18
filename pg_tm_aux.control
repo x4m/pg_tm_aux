@@ -1,0 +1,5 @@
+# pg_tm_aux extension
+comment = 'transfer manager auxilary functions'
+default_version = '1.0'
+module_pathname = '$libdir/pg_tm_aux'
+relocatable = true
