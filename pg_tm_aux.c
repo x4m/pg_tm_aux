@@ -97,7 +97,7 @@ pg_create_logical_replication_slot_lsn(PG_FUNCTION_ARGS)
 	Name		name = PG_GETARG_NAME(0);
 	Name		plugin = PG_GETARG_NAME(1);
 	bool		temporary = PG_GETARG_BOOL(2);
-	XLogRecPtr	restart_lsn = PG_GETARG_INT64(3);
+	XLogRecPtr	restart_lsn = PG_GETARG_LSN(3);
 	Datum		result;
 	TupleDesc	tupdesc;
 	HeapTuple	tuple;
