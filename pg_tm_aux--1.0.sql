@@ -7,8 +7,8 @@
 -- pg_create_logical_replication_slot_lsn()
 --
 CREATE FUNCTION pg_create_logical_replication_slot_lsn(text, text, bool, pg_lsn)
-RETURNS VOID
+RETURNS RECORD
 AS 'MODULE_PATHNAME', 'pg_create_logical_replication_slot_lsn'
-LANGUAGE C STRICT PARALLEL RESTRICTED;
+LANGUAGE C STRICT VOLATILE RESTRICTED;
 
 REVOKE ALL ON FUNCTION pg_create_logical_replication_slot_lsn(text, text, bool, pg_lsn) FROM PUBLIC;
