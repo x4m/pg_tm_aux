@@ -8,11 +8,11 @@
 --
 CREATE OR REPLACE FUNCTION pg_create_logical_replication_slot_lsn(
     IN slot_name name, IN plugin name,
-    IN temporary boolean DEFAULT false, IN restart_lsn pg_lsn,
+    IN temporary boolean DEFAULT false, IN restart_lsn pg_lsn DEFAULT null,
     OUT slot_name name, OUT lsn pg_lsn)
 RETURNS RECORD
-LANGUAGE INTERNAL
-STRICT VOLATILE
-AS 'MODULE_PATHNAME', 'pg_create_logical_replication_slot';
+LANGUAGE C
+STRICT VOLATILE 
+AS 'MODULE_PATHNAME', 'pg_create_logical_replication_slot_lsn';
 
-REVOKE ALL ON FUNCTION pg_create_logical_replication_slot_lsn(text, text, bool, pg_lsn) FROM PUBLIC;
+-- REVOKE ALL ON FUNCTION pg_create_logical_replication_slot_lsn(text, text, bool, pg_lsn) FROM PUBLIC;
