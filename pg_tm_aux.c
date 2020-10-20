@@ -47,6 +47,14 @@ create_logical_replication_slot(char *name, char *plugin,
 {
 	LogicalDecodingContext *ctx = NULL;
 
+	if (XLogRecPtrIsInvalid(restart_lsn))
+	{
+		elog(ERROR, "invalid");
+	}
+	else
+	{
+		elog(WARNING, "valid");
+	}
 	Assert(!MyReplicationSlot);
 
 	/*
@@ -103,7 +111,6 @@ pg_create_logical_replication_slot_lsn(PG_FUNCTION_ARGS)
 	HeapTuple	tuple;
 	Datum		values[2];
 	bool		nulls[2];
-
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
@@ -117,6 +124,8 @@ pg_create_logical_replication_slot_lsn(PG_FUNCTION_ARGS)
 									restart_lsn,
 									true);
 
+	MyReplicationSlot->data.restart_lsn = restart_lsn;
+	MyReplicationSlot->data.confirmed_flush = restart_lsn;
 	values[0] = NameGetDatum(&MyReplicationSlot->data.name);
 	values[1] = LSNGetDatum(MyReplicationSlot->data.confirmed_flush);
 
