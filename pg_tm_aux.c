@@ -46,15 +46,6 @@ create_logical_replication_slot(char *name, char *plugin,
 								bool find_startpoint)
 {
 	LogicalDecodingContext *ctx = NULL;
-
-	if (XLogRecPtrIsInvalid(restart_lsn))
-	{
-		elog(ERROR, "invalid");
-	}
-	else
-	{
-		elog(WARNING, "valid");
-	}
 	Assert(!MyReplicationSlot);
 
 	/*
