@@ -1,13 +1,12 @@
-Source: logerrors
+Source: pg_tm_aux
 Section: database
 Priority: optional
-Maintainer: Sviatoslav Ermilin (Yandex.Cloud) <munakoiso@yandex-team.ru>
-Build-Depends: debhelper (>= 9), postgresql-server-dev-all (>= 195~), git,
- postgresql-server-dev-11, postgresql-server-dev-10, postgresql-server-dev-12, postgresql-server-dev-13
+Maintainer: Andrey Borodin (Yandex.Cloud) <x4mmm@yandex-team.ru>
+Build-Depends: debhelper (>= 9), postgresql-server-dev-all (>= 195~), git, postgresql-server-dev-12
 Standards-Version: 1.1-0
-Homepage: https://github.com/munakoiso/logerrors
+Homepage: https://github.com/munakoiso/pg_tm_aux
 
-Package: postgresql-PGVERSION-logerrors
+Package: postgresql-PGVERSION-pg-tm-aux
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, postgresql-PGVERSION
 Description: Extension for PostgreSQL for collecting statistics about messages in logfile
