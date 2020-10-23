@@ -1,0 +1,2 @@
+version=4
+https://github.com/postgrespro/jsquery/releases .*/ver_(.*).tar.gz

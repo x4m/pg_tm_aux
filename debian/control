@@ -1,0 +1,28 @@
+Source: pg_tm_aux
+Section: database
+Priority: optional
+Maintainer: Andrey Borodin (Yandex.Cloud) <x4mmm@yandex-team.ru>
+Build-Depends: debhelper (>= 9), postgresql-server-dev-all (>= 195~), git,
+ postgresql-server-dev-11, postgresql-server-dev-10, postgresql-server-dev-12, postgresql-server-dev-13
+Standards-Version: 1.1-0
+Homepage: https://github.yandex-team.ru/mdb/pg_tm_aux
+
+Package: postgresql-10-pg_tm_aux
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, postgresql-10
+Description: Extension for PostgreSQL for collecting statistics about messages in logfile
+
+Package: postgresql-11-pg_tm_aux
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, postgresql-11
+Description: Extension for PostgreSQL for collecting statistics about messages in logfile
+
+Package: postgresql-12-pg_tm_aux
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, postgresql-12
+Description: Extension for PostgreSQL for collecting statistics about messages in logfile
+
+Package: postgresql-13-pg_tm_aux
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, postgresql-13
+Description: Extension for PostgreSQL for collecting statistics about messages in logfile

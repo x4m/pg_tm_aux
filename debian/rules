@@ -1,0 +1,21 @@
+#!/usr/bin/make -f
+
+override_dh_auto_configure:
+	git clone https://github.com/munakoiso/logerrors.git
+	mv logerrors/* .
+
+override_dh_auto_build:
+	+pg_buildext build build-%v
+
+override_dh_auto_test:
+	# nothing to do here, see debian/tests/* instead
+
+override_dh_auto_install:
+	+export PG_SUPPORTED_VERSIONS=installed && pg_buildext install build-%v postgresql-%v-logerrors
+
+override_dh_auto_clean:
+	+pg_buildext clean build-%v
+	rm -rf logerrors
+
+%:
+	dh $@
