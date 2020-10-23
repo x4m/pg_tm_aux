@@ -1,4 +1,4 @@
-Source: pg_tm_aux
+Source: pg-tm-aux
 Section: database
 Priority: optional
 Maintainer: Andrey Borodin (Yandex.Cloud) <x4mmm@yandex-team.ru>
