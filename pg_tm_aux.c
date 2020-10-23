@@ -21,6 +21,10 @@
 #include "utils/pg_lsn.h"
 #include "utils/resowner.h"
 
+#if (PG_VERSION_NUM < 130000)
+#include "replication/logicalfuncs.h"
+#endif
+
 
 PG_MODULE_MAGIC;
 
@@ -72,6 +76,7 @@ create_logical_replication_slot(char *name, char *plugin,
 	MyReplicationSlot->data.confirmed_flush = restart_lsn;
 	SpinLockRelease(&MyReplicationSlot->mutex);
 
+
 	/*
 	 * Create logical decoding context to find start point or, if we don't
 	 * need it, to 1) bump slot's restart_lsn and xmin 2) check plugin sanity.
@@ -79,6 +84,7 @@ create_logical_replication_slot(char *name, char *plugin,
 	 * Note: when !find_startpoint this is still important, because it's at
 	 * this point that the output plugin is validated.
 	 */
+#if (PG_VERSION_NUM >= 130000)
 	ctx = CreateInitDecodingContext(plugin, NIL,
 									false,	/* just catalogs is OK */
 									restart_lsn,
@@ -86,6 +92,13 @@ create_logical_replication_slot(char *name, char *plugin,
 											   .segment_open = wal_segment_open,
 											   .segment_close = wal_segment_close),
 									NULL, NULL, NULL);
+#else
+	ctx = CreateInitDecodingContext(plugin, NIL,
+									false,	/* just catalogs is OK */
+									restart_lsn,
+									logical_read_local_xlog_page, NULL, NULL,
+									NULL);
+#endif
 
 	/*
 	 * If caller needs us to determine the decoding start point, do so now.
