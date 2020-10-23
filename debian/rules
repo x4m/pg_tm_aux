@@ -11,7 +11,7 @@ override_dh_auto_test:
 	# nothing to do here, see debian/tests/* instead
 
 override_dh_auto_install:
-	+export PG_SUPPORTED_VERSIONS=installed && pg_buildext install build-%v postgresql-%v-pg-tm-aux
+	+export PG_SUPPORTED_VERSIONS=installed && pg_buildext install build-%v pg-tm-aux-12
 
 override_dh_auto_clean:
 	+pg_buildext clean build-%v
