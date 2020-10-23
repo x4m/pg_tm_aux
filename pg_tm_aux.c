@@ -15,6 +15,7 @@
 #include "replication/decode.h"
 #include "replication/logical.h"
 #include "replication/slot.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/inval.h"
 #include "utils/pg_lsn.h"
@@ -27,9 +28,14 @@ static void
 check_permissions(void)
 {
 	if (!superuser() && !has_rolreplication(GetUserId()))
+	{
+		Oid role = get_role_oid("mdb_replication", true);
+		if (is_member_of_role(GetUserId(), role))
+			return;
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser or replication role to use replication slots")));
+	}
 }
 
 /*
@@ -58,6 +64,13 @@ create_logical_replication_slot(char *name, char *plugin,
 	 */
 	ReplicationSlotCreate(name, true,
 						  temporary ? RS_TEMPORARY : RS_EPHEMERAL);
+
+	/* We intentionaly ignore values found by create_logical_replication_slot */
+	/* This actually moves slot backwards and constitues race condition */
+	SpinLockAcquire(&MyReplicationSlot->mutex);
+	MyReplicationSlot->data.restart_lsn = restart_lsn;
+	MyReplicationSlot->data.confirmed_flush = restart_lsn;
+	SpinLockRelease(&MyReplicationSlot->mutex);
 
 	/*
 	 * Create logical decoding context to find start point or, if we don't
@@ -113,10 +126,8 @@ pg_create_logical_replication_slot_lsn(PG_FUNCTION_ARGS)
 									NameStr(*plugin),
 									temporary,
 									restart_lsn,
-									true);
+									false);
 
-	MyReplicationSlot->data.restart_lsn = restart_lsn;
-	MyReplicationSlot->data.confirmed_flush = restart_lsn;
 	values[0] = NameGetDatum(&MyReplicationSlot->data.name);
 	values[1] = LSNGetDatum(MyReplicationSlot->data.confirmed_flush);
 

@@ -15,4 +15,4 @@ LANGUAGE C
 STRICT VOLATILE 
 AS 'MODULE_PATHNAME', 'pg_create_logical_replication_slot_lsn';
 
--- REVOKE ALL ON FUNCTION pg_create_logical_replication_slot_lsn(text, text, bool, pg_lsn) FROM PUBLIC;
+-- NOTE: pg_create_logical_replication_slot_lsn() checks permissions internally, no need to worry here
