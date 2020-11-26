@@ -92,10 +92,15 @@ create_logical_replication_slot(char *name, char *plugin,
 											   .segment_open = wal_segment_open,
 											   .segment_close = wal_segment_close),
 									NULL, NULL, NULL);
-#else
+#elif (PG_VERSION_NUM >= 120000)
 	ctx = CreateInitDecodingContext(plugin, NIL,
 									false,	/* just catalogs is OK */
 									restart_lsn,
+									logical_read_local_xlog_page, NULL, NULL,
+									NULL);
+#else
+	ctx = CreateInitDecodingContext(plugin, NIL,
+									false,	/* do not build snapshot */
 									logical_read_local_xlog_page, NULL, NULL,
 									NULL);
 #endif
