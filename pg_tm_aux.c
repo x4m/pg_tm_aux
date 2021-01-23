@@ -42,6 +42,128 @@ check_permissions(void)
 	}
 }
 
+// We have to hack CreateInitDecodingContext() when it was without restart_lsn
+#if PG_VERSION_NUM < 120000
+
+#include "utils/memutils.h"
+#include "storage/procarray.h"
+#include "access/xact.h"
+/*
+ * Create a new decoding context, for a new logical slot.
+ *
+ * plugin contains the name of the output plugin
+ * output_plugin_options contains options passed to the output plugin
+ * read_page, prepare_write, do_write, update_progress
+ *		callbacks that have to be filled to perform the use-case dependent,
+ *		actual, work.
+ *
+ * Needs to be called while in a memory context that's at least as long lived
+ * as the decoding context because further memory contexts will be created
+ * inside it.
+ *
+ * Returns an initialized decoding context after calling the output plugin's
+ * startup function.
+ */
+static LogicalDecodingContext *
+CreateInitDecodingContextExt(char *plugin,
+						  List *output_plugin_options,
+						  bool need_full_snapshot,
+						  XLogPageReadCB read_page,
+						  LogicalOutputPluginWriterPrepareWrite prepare_write,
+						  LogicalOutputPluginWriterWrite do_write,
+						  LogicalOutputPluginWriterUpdateProgress update_progress,
+						  XLogRecPtr restart_lsn)
+{
+	TransactionId xmin_horizon = InvalidTransactionId;
+	ReplicationSlot *slot;
+
+	/* shorter lines... */
+	slot = MyReplicationSlot;
+
+	/* first some sanity checks that are unlikely to be violated */
+	if (slot == NULL)
+		elog(ERROR, "cannot perform logical decoding without an acquired slot");
+
+	if (plugin == NULL)
+		elog(ERROR, "cannot initialize logical decoding without a specified plugin");
+
+	/* Make sure the passed slot is suitable. These are user facing errors. */
+	if (SlotIsPhysical(slot))
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("cannot use physical replication slot for logical decoding")));
+
+	if (slot->data.database != MyDatabaseId)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("replication slot \"%s\" was not created in this database",
+						NameStr(slot->data.name))));
+
+	if (IsTransactionState() &&
+		GetTopTransactionIdIfAny() != InvalidTransactionId)
+		ereport(ERROR,
+				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
+				 errmsg("cannot create logical replication slot in transaction that has performed writes")));
+
+	/* register output plugin name with slot */
+	SpinLockAcquire(&slot->mutex);
+	StrNCpy(NameStr(slot->data.plugin), plugin, NAMEDATALEN);
+	SpinLockRelease(&slot->mutex);
+
+	if (XLogRecPtrIsInvalid(restart_lsn))
+		ReplicationSlotReserveWal();
+	else
+	{
+		SpinLockAcquire(&slot->mutex);
+		slot->data.restart_lsn = restart_lsn;
+		SpinLockRelease(&slot->mutex);
+	}
+
+	/* ----
+	 * This is a bit tricky: We need to determine a safe xmin horizon to start
+	 * decoding from, to avoid starting from a running xacts record referring
+	 * to xids whose rows have been vacuumed or pruned
+	 * already. GetOldestSafeDecodingTransactionId() returns such a value, but
+	 * without further interlock its return value might immediately be out of
+	 * date.
+	 *
+	 * So we have to acquire the ProcArrayLock to prevent computation of new
+	 * xmin horizons by other backends, get the safe decoding xid, and inform
+	 * the slot machinery about the new limit. Once that's done the
+	 * ProcArrayLock can be released as the slot machinery now is
+	 * protecting against vacuum.
+	 *
+	 * Note that, temporarily, the data, not just the catalog, xmin has to be
+	 * reserved if a data snapshot is to be exported.  Otherwise the initial
+	 * data snapshot created here is not guaranteed to be valid. After that
+	 * the data xmin doesn't need to be managed anymore and the global xmin
+	 * should be recomputed. As we are fine with losing the pegged data xmin
+	 * after crash - no chance a snapshot would get exported anymore - we can
+	 * get away with just setting the slot's
+	 * effective_xmin. ReplicationSlotRelease will reset it again.
+	 *
+	 * ----
+	 */
+	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+
+	xmin_horizon = GetOldestSafeDecodingTransactionId(!need_full_snapshot);
+
+	slot->effective_catalog_xmin = xmin_horizon;
+	slot->data.catalog_xmin = xmin_horizon;
+	if (need_full_snapshot)
+		slot->effective_xmin = xmin_horizon;
+
+	ReplicationSlotsComputeRequiredXmin(true);
+
+	LWLockRelease(ProcArrayLock);
+
+	ReplicationSlotMarkDirty();
+	ReplicationSlotSave();
+
+	return NULL;
+}
+#endif
+
 /*
  * Helper function for creating a new logical replication slot with
  * given arguments. Note that this function doesn't release the created
@@ -52,8 +174,7 @@ check_permissions(void)
  */
 static void
 create_logical_replication_slot(char *name, char *plugin,
-								bool temporary, XLogRecPtr restart_lsn,
-								bool find_startpoint)
+								bool temporary, XLogRecPtr restart_lsn)
 {
 	LogicalDecodingContext *ctx = NULL;
 	Assert(!MyReplicationSlot);
@@ -99,21 +220,15 @@ create_logical_replication_slot(char *name, char *plugin,
 									logical_read_local_xlog_page, NULL, NULL,
 									NULL);
 #else
-	ctx = CreateInitDecodingContext(plugin, NIL,
+	ctx = CreateInitDecodingContextExt(plugin, NIL,
 									false,	/* do not build snapshot */
 									logical_read_local_xlog_page, NULL, NULL,
-									NULL);
+									NULL, restart_lsn);
 #endif
 
-	/*
-	 * If caller needs us to determine the decoding start point, do so now.
-	 * This might take a while.
-	 */
-	if (find_startpoint)
-		DecodingContextFindStartpoint(ctx);
-
 	/* don't need the decoding context anymore */
-	FreeDecodingContext(ctx);
+	if (ctx != NULL)
+		FreeDecodingContext(ctx);
 }
 
 PG_FUNCTION_INFO_V1(pg_create_logical_replication_slot_lsn);
@@ -143,8 +258,7 @@ pg_create_logical_replication_slot_lsn(PG_FUNCTION_ARGS)
 	create_logical_replication_slot(NameStr(*name),
 									NameStr(*plugin),
 									temporary,
-									restart_lsn,
-									false);
+									restart_lsn);
 
 	values[0] = NameGetDatum(&MyReplicationSlot->data.name);
 	values[1] = LSNGetDatum(MyReplicationSlot->data.confirmed_flush);
