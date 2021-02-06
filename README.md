@@ -8,6 +8,7 @@ This leads to massive waste of network bandwidth in our installations, due to ne
 This extension implements Yandex Data Transfer auxiliary functions to create slot in the past.
 
 ## Usage
-
+```
 SELECT * from  pg_create_logical_replication_slot_lsn('dtt3gjq2tfmocenb6vru', 'wal2json', false, pg_lsn('1/20030948'));
 SELECT * from pg_logical_slot_peek_changes('dtt3gjq2tfmocenb6vru', null, null);
+```
