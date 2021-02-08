@@ -1,5 +1,5 @@
 # pg_tm_aux
-Extension to create a logical replication slot in the past. It is useful to implement continuous logical streaming from the highly available cluster on physical replication. When priary node of a cluster is failovered, we need to start logical streaming from new node.
+Extension to create a logical replication slot in the past. It is useful to implement continuous logical streaming from the highly available cluster on physical replication. When primary node of a cluster is failovered, we need to start logical streaming from new node.
 
 We cannot start logical replication from LSN different from LSN of a slot. And cannot create a slot on LSN in the past, particularly before or right after promotion.
 
