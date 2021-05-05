@@ -6,7 +6,7 @@ OBJS = \
 	pg_tm_aux.o
 
 EXTENSION = pg_tm_aux
-DATA = pg_tm_aux--1.0.sql
+DATA = pg_tm_aux--1.0.sql pg_tm_aux--1.0--1.1.sql
 PGFILEDESC = "pg_tm_aux - transfer manager auxilary functions"
 
 REGRESS = check

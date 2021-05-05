@@ -8,6 +8,7 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "access/timeline.h"
 #include "access/xlog_internal.h"
 #include "access/xlogutils.h"
 #include "funcapi.h"
@@ -40,6 +41,19 @@ check_permissions(void)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser or replication role to use replication slots")));
 	}
+}
+
+static void check_lsn_not_on_current_timeline(XLogRecPtr target_lsn)
+{
+	List	   *timelineHistory = readTimeLineHistory(ThisTimeLineID);
+	TimeLineID target_tli = tliOfPointInHistory(target_lsn, timelineHistory);
+	list_free_deep(timelineHistory);
+
+	if (target_tli == ThisTimeLineID)
+		elog(ERROR, "This timeline %u includes slot LSN %X/%X. The slot must be created before switchover.",
+				ThisTimeLineID,
+				(uint32) (target_lsn >> 32),
+				(uint32) (target_lsn));
 }
 
 // We have to hack CreateInitDecodingContext() when it was without restart_lsn
@@ -248,6 +262,7 @@ pg_create_logical_replication_slot_lsn(PG_FUNCTION_ARGS)
 	Name		plugin = PG_GETARG_NAME(1);
 	bool		temporary = PG_GETARG_BOOL(2);
 	XLogRecPtr	restart_lsn = PG_GETARG_LSN(3);
+	bool		force = PG_GETARG_BOOL(4);
 	Datum		result;
 	TupleDesc	tupdesc;
 	HeapTuple	tuple;
@@ -257,6 +272,9 @@ pg_create_logical_replication_slot_lsn(PG_FUNCTION_ARGS)
 		elog(ERROR, "return type must be a row type");
 
 	check_permissions();
+
+	if (!force)
+		check_lsn_not_on_current_timeline(restart_lsn);
 
 	CheckLogicalDecodingRequirements();
 
