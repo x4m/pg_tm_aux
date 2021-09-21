@@ -12,3 +12,8 @@ This extension implements Yandex Data Transfer auxiliary functions to create slo
 SELECT * from  pg_create_logical_replication_slot_lsn('dtt3gjq2tfmocenb6vru', 'wal2json', false, pg_lsn('1/20030948'));
 SELECT * from pg_logical_slot_peek_changes('dtt3gjq2tfmocenb6vru', null, null);
 ```
+## Limitations
+
+In certain cases pg_tm_aux cannot create slot:
+1. WAL for LSN is not accesible anymore on the new primary server
+2. Catalog snapshot cannot be built for LSN
