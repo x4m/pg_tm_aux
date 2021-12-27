@@ -1,12 +1,32 @@
-Source: pg-tm-aux-12
+Source: pg-tm-aux
 Section: database
 Priority: optional
 Maintainer: Andrey Borodin (Yandex.Cloud) <x4mmm@yandex-team.ru>
 Build-Depends: debhelper (>= 9), postgresql-server-dev-all (>= 195~), git, postgresql-server-dev-12
 Standards-Version: 1.1-0
-Homepage: https://github.yandex-team.ru/mdb/pg_tm_aux
+Homepage: https://github.com/x4m/pg_tm_aux
+
+Package: pg-tm-aux-10
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, postgresql-10
+Description: Extension to create a logical replication slot in the past.
+
+Package: pg-tm-aux-11
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, postgresql-11
+Description: Extension to create a logical replication slot in the past.
 
 Package: pg-tm-aux-12
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, postgresql-12
-Description: Extension for PostgreSQL for collecting statistics about messages in logfile
+Description: Extension to create a logical replication slot in the past.
+
+Package: pg-tm-aux-13
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, postgresql-13
+Description: Extension to create a logical replication slot in the past.
+
+Package: pg-tm-aux-14
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, postgresql-14
+Description: Extension to create a logical replication slot in the past.
