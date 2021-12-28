@@ -2,9 +2,9 @@ Source: pg_tm_aux
 Section: database
 Priority: optional
 Maintainer: Andrey Borodin (Yandex.Cloud) <x4mmm@yandex-team.ru>
-Build-Depends: debhelper (>= 9), postgresql-server-dev-all (>= 195~), git, postgresql-server-dev-12
+Build-Depends: debhelper (>= 9), postgresql-server-dev-all (>= 195~), git
 Standards-Version: 1.1-0
-Homepage: https://github.com/munakoiso/pg_tm_aux
+Homepage: https://github.com/x4m/pg_tm_aux
 
 Package: postgresql-PGVERSION-pg-tm-aux
 Architecture: any
