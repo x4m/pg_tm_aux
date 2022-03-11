@@ -17,3 +17,5 @@ SELECT * from pg_logical_slot_peek_changes('dtt3gjq2tfmocenb6vru', null, null);
 In certain cases pg_tm_aux cannot create slot:
 1. WAL for LSN is not accesible anymore on the new primary server
 2. Catalog snapshot cannot be built for LSN
+
+Logical replication may be slightly ahead of physical replication that is acknowledged by synchronous\quorum replics. In this case, logical stream might have some transactions that are not committed and will not survive Primary node failover. To protect from this pg_tm_aux do not allow to create a slot on current timeline. For more informatin please refer to [FOSDEM talk Caveats of replication](https://archive.fosdem.org/2021/schedule/event/postgresql_caveats_of_replication/).
