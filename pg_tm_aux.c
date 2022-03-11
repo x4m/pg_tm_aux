@@ -262,7 +262,9 @@ pg_create_logical_replication_slot_lsn(PG_FUNCTION_ARGS)
 	Name		plugin = PG_GETARG_NAME(1);
 	bool		temporary = PG_GETARG_BOOL(2);
 	XLogRecPtr	restart_lsn = PG_GETARG_LSN(3);
-	bool		force = PG_GETARG_BOOL(4);
+	bool		force = false;
+	if (PG_NARGS() >= 5)
+		force = PG_GETARG_BOOL(4);
 	Datum		result;
 	TupleDesc	tupdesc;
 	HeapTuple	tuple;
