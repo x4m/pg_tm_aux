@@ -263,13 +263,15 @@ pg_create_logical_replication_slot_lsn(PG_FUNCTION_ARGS)
 	bool		temporary = PG_GETARG_BOOL(2);
 	XLogRecPtr	restart_lsn = PG_GETARG_LSN(3);
 	bool		force = false;
-	if (PG_NARGS() >= 5)
-		force = PG_GETARG_BOOL(4);
 	Datum		result;
 	TupleDesc	tupdesc;
 	HeapTuple	tuple;
 	Datum		values[2];
 	bool		nulls[2];
+	
+	if (PG_NARGS() >= 5)
+		force = PG_GETARG_BOOL(4);
+
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
