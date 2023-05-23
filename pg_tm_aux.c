@@ -45,6 +45,9 @@ check_permissions(void)
 
 static void check_lsn_not_on_current_timeline(XLogRecPtr target_lsn)
 {
+#if (PG_VERSION_NUM >= 150000)
+	TimeLineID ThisTimeLineID = GetWALInsertionTimeLine();
+#endif
 	List	   *timelineHistory = readTimeLineHistory(ThisTimeLineID);
 	TimeLineID target_tli = tliOfPointInHistory(target_lsn, timelineHistory);
 	list_free_deep(timelineHistory);
