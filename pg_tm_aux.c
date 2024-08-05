@@ -204,12 +204,17 @@ create_logical_replication_slot(char *name, char *plugin,
 	 * slots can be created as temporary from beginning as they get dropped on
 	 * error as well.
 	 */
-#if (PG_VERSION_NUM >= 140000)
+#if (PG_VERSION_NUM >= 170000)
+	ReplicationSlotCreate(name, true,
+						  temporary ? RS_TEMPORARY : RS_EPHEMERAL, false, false, false);
+#else
+#    if (PG_VERSION_NUM >= 140000)
 	ReplicationSlotCreate(name, true,
 						  temporary ? RS_TEMPORARY : RS_EPHEMERAL, false);
-#else
+#    else
 	ReplicationSlotCreate(name, true,
 						  temporary ? RS_TEMPORARY : RS_EPHEMERAL);
+#    endif
 #endif
 
 	/* We intentionaly ignore values found by create_logical_replication_slot */
