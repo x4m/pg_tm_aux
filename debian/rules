@@ -7,7 +7,7 @@ override_dh_auto_test:
 	# nothing to do here, see debian/tests/* instead
 
 override_dh_auto_install:
-	+export PG_SUPPORTED_VERSIONS=pgdg && pg_buildext loop pg-tm-aux-%v
+	+pg_buildext loop pg-tm-aux-%v
 
 override_dh_auto_clean:
 	+pg_buildext clean build-%v
