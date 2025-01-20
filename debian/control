@@ -30,3 +30,18 @@ Package: pg-tm-aux-14
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, postgresql-14
 Description: Extension to create a logical replication slot in the past.
+
+Package: pg-tm-aux-15
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, postgresql-15
+Description: Extension to create a logical replication slot in the past.
+
+Package: pg-tm-aux-16
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, postgresql-16
+Description: Extension to create a logical replication slot in the past.
+
+Package: pg-tm-aux-17
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, postgresql-17
+Description: Extension to create a logical replication slot in the past.
