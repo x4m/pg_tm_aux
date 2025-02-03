@@ -7,6 +7,8 @@
  */
 #include "postgres.h"
 
+#include <unistd.h>
+
 #include "access/htup_details.h"
 #include "access/timeline.h"
 #include "access/xlog_internal.h"
@@ -45,6 +47,9 @@ check_permissions(void)
 
 static void check_lsn_not_on_current_timeline(XLogRecPtr target_lsn)
 {
+	char		path[MAXPGPATH];
+	int	sendFile = -1;
+	XLogSegNo sendSegNo = 0;
 #if (PG_VERSION_NUM >= 150000)
 	TimeLineID ThisTimeLineID = GetWALInsertionTimeLine();
 #endif
@@ -57,6 +62,42 @@ static void check_lsn_not_on_current_timeline(XLogRecPtr target_lsn)
 				ThisTimeLineID,
 				(uint32) (target_lsn >> 32),
 				(uint32) (target_lsn));
+
+	XLByteToSeg(target_lsn, sendSegNo
+#if (PG_VERSION_NUM >= 110000)
+	,wal_segment_size
+#endif
+	);
+
+	XLogFilePath(path, target_tli, sendSegNo
+#if (PG_VERSION_NUM >= 110000)
+	,wal_segment_size
+#endif
+	);
+
+	sendFile = BasicOpenFile(path, O_RDONLY | PG_BINARY
+#if (PG_VERSION_NUM < 110000)
+	, 0
+#endif
+	);
+
+	if (sendFile < 0)
+	{
+		if (errno == ENOENT)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+						errmsg("requested WAL segment %s has already been removed",
+							path)));
+		else
+			ereport(ERROR,
+					(errcode_for_file_access(),
+						errmsg("could not open file \"%s\": %m",
+							path)));
+	}
+	else
+	{
+		close(sendFile);
+	}
 }
 
 // We have to hack CreateInitDecodingContext() when it was without restart_lsn
